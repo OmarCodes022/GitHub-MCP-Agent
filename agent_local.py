@@ -1,4 +1,12 @@
 import os
+import sys
+
+from rich.console import Console
+from rich.rule import Rule
+from rich.text import Text
+from prompt_toolkit import PromptSession
+from prompt_toolkit.history import InMemoryHistory
+from prompt_toolkit.styles import Style
 
 from strands import Agent
 from strands.models import BedrockModel
@@ -10,6 +18,15 @@ from mcp.client.stdio import stdio_client
 GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
 AWS_REGION = "us-east-1"
 MODEL_ID = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+
+console = Console()
+
+prompt_style = Style.from_dict({
+    "prompt": "bold cyan",
+})
+
+with open(os.path.join(os.path.dirname(__file__), "system_prompt.txt")) as f:
+    system_prompt = f.read()
 
 github_mcp_client = MCPClient(
     lambda: stdio_client(
@@ -35,48 +52,51 @@ model = BedrockModel(
     region_name=AWS_REGION,
 )
 
-system_prompt = """
-You are a GitHub project management assistant with full access to GitHub tools.
+try:
+    with github_mcp_client:
+        tools = github_mcp_client.list_tools_sync()
 
-When a user asks about a repository, user, issue, PR, or anything GitHub-related, ALWAYS use your tools to look it up. Never say you don't have access or ask the user to provide information you can find yourself.
+        console.print()
+        console.print(Rule("[bold green]GitHub MCP Agent[/bold green]"))
+        console.print(f"  [dim]Loaded [bold]{len(tools)}[/bold] tools  |  Model: [bold]{MODEL_ID.split('.')[-1]}[/bold]  |  Type 'exit' to quit[/dim]")
+        console.print(Rule())
+        console.print()
 
-Examples of proactive tool use:
-- "what issues are open?" -> search for issues using the tools, do not ask which repo
-- "summarize this repo" -> fetch the repo, read files, list issues and PRs
-- "who contributed most?" -> look it up via the API
-- If the user mentions a repo name or username, use it immediately without asking for clarification
-- If a name search fails, try variations: different casing, hyphens vs underscores, with/without year suffixes, abbreviated names. Try at least 3-4 variations before giving up.
-- If an org name is ambiguous, search for the org by keyword using search tools before asking the user.
+        agent = Agent(
+            model=model,
+            tools=tools,
+            system_prompt=system_prompt,
+        )
 
-Rules:
-- Never delete repositories.
-- Never change repository settings.
-- Never create more than 5 issues at once unless clearly asked.
-- Before creating issues, summarize what you are about to create.
-- You are running in a terminal. Use plain text only. No markdown, no bold, no tables, no emojis, no bullet symbols.
-- Always try tools first. Only ask the user for input if the tools truly cannot answer.
-"""
+        session = PromptSession(history=InMemoryHistory(), style=prompt_style)
 
-with github_mcp_client:
-    print("Starting GitHub MCP server with Docker...")
+        while True:
+            try:
+                user_input = session.prompt([("class:prompt", " You > ")])
+            except (KeyboardInterrupt, EOFError):
+                break
 
-    tools = github_mcp_client.list_tools_sync()
+            if not user_input.strip():
+                continue
 
-    print(f"Loaded {len(tools)} GitHub tools.")
+            if user_input.strip().lower() in ["exit", "quit"]:
+                break
 
-    agent = Agent(
-        model=model,
-        tools=tools,
-        system_prompt=system_prompt,
-    )
+            console.print()
+            console.print(Text(" Agent", style="bold magenta"))
+            console.print()
 
-    print("Agent ready. Type 'exit' to quit.")
+            try:
+                agent(user_input)
+            except Exception as e:
+                console.print(f"[bold red]Error:[/bold red] {e}")
 
-    while True:
-        prompt = input("\nYou > ")
+            console.print()
 
-        if prompt.lower() in ["exit", "quit"]:
-            break
+        console.print()
+        console.print(Rule("[dim]Session ended[/dim]"))
+        console.print()
 
-        print("\nAgent >")
-        response = agent(prompt)
+except Exception as e:
+    console.print(f"\n[bold red]Failed to start:[/bold red] {e}\n")
+    sys.exit(1)
