@@ -59,6 +59,9 @@ github_mcp_client = MCPClient(
                 "-e",
                 "GITHUB_PERSONAL_ACCESS_TOKEN",
                 "ghcr.io/github/github-mcp-server",
+                "stdio",
+                "--toolsets",
+                "all",
             ],
             env={
                 "GITHUB_PERSONAL_ACCESS_TOKEN": GITHUB_TOKEN,
