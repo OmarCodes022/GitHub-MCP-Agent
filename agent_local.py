@@ -1,4 +1,6 @@
 import os
+import re
+import subprocess
 import sys
 
 from rich.console import Console
@@ -25,8 +27,26 @@ prompt_style = Style.from_dict({
     "prompt": "bold cyan",
 })
 
+def detect_current_repo():
+    try:
+        url = subprocess.check_output(
+            ["git", "remote", "get-url", "origin"],
+            stderr=subprocess.DEVNULL,
+            cwd=os.getcwd(),
+        ).decode().strip()
+        match = re.search(r"github\.com[:/](.+?)(?:\.git)?$", url)
+        if match:
+            return match.group(1)
+    except Exception:
+        pass
+    return None
+
 with open(os.path.join(os.path.dirname(__file__), "system_prompt.txt")) as f:
     system_prompt = f.read()
+
+current_repo = detect_current_repo()
+if current_repo:
+    system_prompt += f"\n\nThe user is currently working in the GitHub repository: {current_repo}. Default to this repository for all actions unless the user explicitly specifies another."
 
 github_mcp_client = MCPClient(
     lambda: stdio_client(
@@ -58,7 +78,8 @@ try:
 
         console.print()
         console.print(Rule("[bold green]GitHub MCP Agent[/bold green]"))
-        console.print(f"  [dim]Loaded [bold]{len(tools)}[/bold] tools  |  Model: [bold]{MODEL_ID.split('.')[-1]}[/bold]  |  Type 'exit' to quit[/dim]")
+        repo_label = f"[bold]{current_repo}[/bold]" if current_repo else "[dim]none detected[/dim]"
+        console.print(f"  [dim]Loaded [bold]{len(tools)}[/bold] tools  |  Repo: {repo_label}  |  Type 'exit' to quit[/dim]")
         console.print(Rule())
         console.print()
 
