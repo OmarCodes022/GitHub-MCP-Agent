@@ -37,6 +37,9 @@ When setting Status on a project item:
   - Set Status to "Todo" by default unless told otherwise
   - Do not set Size, Estimate, or Iteration unless explicitly asked.
 
+Reading issues:
+- list_issues_with_priorities returns number, title, priority, description, and state in one call. Use it whenever the user asks about issues. It replaces list_issues — do not call both.
+
 Rules:
 - Never delete repositories.
 - Never change repository settings.
