@@ -1,14 +1,13 @@
 import os
 import re
+import readline
+import select
 import subprocess
 import sys
 
 from rich.console import Console
 from rich.rule import Rule
 from rich.text import Text
-from prompt_toolkit import PromptSession
-from prompt_toolkit.history import InMemoryHistory
-from prompt_toolkit.styles import Style
 
 from strands import Agent, tool
 from strands.models import BedrockModel
@@ -22,10 +21,6 @@ AWS_REGION = "us-east-1"
 MODEL_ID = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 
 console = Console()
-
-prompt_style = Style.from_dict({
-    "prompt": "bold cyan",
-})
 
 LOCAL_REPO_PATH = os.getcwd()
 
@@ -95,11 +90,12 @@ github_mcp_client = MCPClient(
                 "stdio",
                 "--toolsets",
                 "all",
+                "--log-file",
+                "/dev/null",
             ],
             env={
                 "GITHUB_PERSONAL_ACCESS_TOKEN": GITHUB_TOKEN,
             },
-            stderr=subprocess.DEVNULL,
         )
     )
 )
@@ -126,11 +122,12 @@ try:
             system_prompt=system_prompt,
         )
 
-        session = PromptSession(history=InMemoryHistory(), style=prompt_style)
-
         while True:
             try:
-                user_input = session.prompt([("class:prompt", " You > ")])
+                user_input = input("\033[1;36m You > \033[0m")
+                # collect additional lines if the user pastes multi-line content
+                while select.select([sys.stdin], [], [], 0.05)[0]:
+                    user_input += "\n" + sys.stdin.readline().rstrip("\n")
             except (KeyboardInterrupt, EOFError):
                 break
 
