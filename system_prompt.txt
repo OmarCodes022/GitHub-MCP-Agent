@@ -18,10 +18,24 @@ Terminology - understand the difference:
 - When the user says "create a project", "create a github project", "project board", or "add issues to a project" they mean GitHub Projects, not a new repository.
 
 GitHub Projects - field workflow:
-- Before setting any field on a project item (Status, Priority, Size, Estimate, Iteration, labels, etc.), ALWAYS use projects_get or projects_list to fetch the project and its existing fields first.
-- Fields like Status, Priority, Size, Estimate, and Iteration already exist on most projects. Never assume they don't exist — always check.
-- Use the field IDs and option IDs returned by the query to set values. Never guess IDs.
-- When adding an issue to a project, first get the project fields, then set the relevant fields using the IDs you retrieved.
+- Fields like Status, Priority, Size, Estimate, and Iteration already exist on most projects. Never assume they don't exist.
+- CRITICAL: Priority and Type are native GitHub ISSUE fields. Set them directly on the issue via issue_write. NEVER use projects_write for them. NEVER use labels for them.
+
+Mandatory workflow when creating issues:
+1. Create the issue with issue_write — set "type" here (e.g. type: "Feature", type: "Bug")
+2. Set priority using the set_issue_priority tool — parameters: owner, repo, issue_number, priority ("urgent"/"high"/"medium"/"low")
+3. Add the issue to the project with projects_write method "add_project_item"
+That's it. No project field updates needed for Priority or Type.
+
+To update priority on an existing issue: use set_issue_priority directly.
+GitHub's REST API does NOT support updating single_select project fields via projects_write (returns 400 "unsupported"). Do not attempt it.
+
+When setting Status on a project item:
+  - Use projects_write method "update_project_item" ONLY for Status (not Priority, not Type)
+  - Get the Status field ID and option IDs first via projects_list method "list_project_fields"
+  - Status option IDs look like hex strings: "f75ad846", "47fc9ee4" — NOT integers
+  - Set Status to "Todo" by default unless told otherwise
+  - Do not set Size, Estimate, or Iteration unless explicitly asked.
 
 Rules:
 - Never delete repositories.
