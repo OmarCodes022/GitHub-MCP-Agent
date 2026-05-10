@@ -10,7 +10,7 @@ from prompt_toolkit import PromptSession
 from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit.styles import Style
 
-from strands import Agent
+from strands import Agent, tool
 from strands.models import BedrockModel
 from strands.tools.mcp.mcp_client import MCPClient
 from mcp import StdioServerParameters
@@ -26,6 +26,39 @@ console = Console()
 prompt_style = Style.from_dict({
     "prompt": "bold cyan",
 })
+
+LOCAL_REPO_PATH = os.getcwd()
+
+@tool
+def read_local_file(path: str) -> str:
+    """Read a file from the local repository. Path is relative to the repo root."""
+    full_path = os.path.normpath(os.path.join(LOCAL_REPO_PATH, path))
+    if not full_path.startswith(LOCAL_REPO_PATH):
+        return "Error: path outside repo root"
+    try:
+        with open(full_path) as f:
+            return f.read()
+    except FileNotFoundError:
+        return f"File not found: {path}"
+    except Exception as e:
+        return f"Error reading file: {e}"
+
+@tool
+def list_local_files(path: str = ".") -> str:
+    """List files and directories in the local repository. Path is relative to the repo root."""
+    full_path = os.path.normpath(os.path.join(LOCAL_REPO_PATH, path))
+    if not full_path.startswith(LOCAL_REPO_PATH):
+        return "Error: path outside repo root"
+    try:
+        entries = []
+        for entry in sorted(os.scandir(full_path), key=lambda e: (not e.is_dir(), e.name)):
+            prefix = "/" if entry.is_dir() else ""
+            entries.append(f"{entry.name}{prefix}")
+        return "\n".join(entries)
+    except FileNotFoundError:
+        return f"Directory not found: {path}"
+    except Exception as e:
+        return f"Error listing files: {e}"
 
 def detect_current_repo():
     try:
@@ -88,7 +121,7 @@ try:
 
         agent = Agent(
             model=model,
-            tools=tools,
+            tools=tools + [read_local_file, list_local_files],
             system_prompt=system_prompt,
         )
 
