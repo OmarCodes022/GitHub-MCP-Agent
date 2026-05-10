@@ -2,8 +2,10 @@
 
 set -e
 
-source .venv/bin/activate
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-export $(grep -v '^#' .env | xargs)
+source "$SCRIPT_DIR/.venv/bin/activate"
 
-python agent_local.py
+export $(grep -v '^#' "$SCRIPT_DIR/.env" | xargs)
+
+python "$SCRIPT_DIR/agent_local.py"
