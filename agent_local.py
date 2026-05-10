@@ -112,13 +112,15 @@ try:
         console.print()
         console.print(Rule("[bold green]GitHub MCP Agent[/bold green]"))
         repo_label = f"[bold]{current_repo}[/bold]" if current_repo else "[dim]none detected[/dim]"
-        console.print(f"  [dim]Loaded [bold]{len(tools)}[/bold] tools  |  Repo: {repo_label}  |  Type 'exit' to quit[/dim]")
+        local_tools = [read_local_file, list_local_files]
+        total_tools = len(tools) + len(local_tools)
+        console.print(f"  [dim]Loaded [bold]{total_tools}[/bold] tools  |  Repo: {repo_label}  |  Model: [bold]{MODEL_ID}[/bold]  |  Type 'exit' to quit[/dim]")
         console.print(Rule())
         console.print()
 
         agent = Agent(
             model=model,
-            tools=tools + [read_local_file, list_local_files],
+            tools=tools + local_tools,
             system_prompt=system_prompt,
         )
 

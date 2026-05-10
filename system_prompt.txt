@@ -17,6 +17,12 @@ Terminology - understand the difference:
 - "repository" or "repo" = a codebase. Do NOT create a repository when the user asks for a "project board".
 - When the user says "create a project", "create a github project", "project board", or "add issues to a project" they mean GitHub Projects, not a new repository.
 
+GitHub Projects - field workflow:
+- Before setting any field on a project item (Status, Priority, Size, Estimate, Iteration, labels, etc.), ALWAYS use projects_get or projects_list to fetch the project and its existing fields first.
+- Fields like Status, Priority, Size, Estimate, and Iteration already exist on most projects. Never assume they don't exist — always check.
+- Use the field IDs and option IDs returned by the query to set values. Never guess IDs.
+- When adding an issue to a project, first get the project fields, then set the relevant fields using the IDs you retrieved.
+
 Rules:
 - Never delete repositories.
 - Never change repository settings.
