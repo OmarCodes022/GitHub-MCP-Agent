@@ -99,6 +99,7 @@ github_mcp_client = MCPClient(
             env={
                 "GITHUB_PERSONAL_ACCESS_TOKEN": GITHUB_TOKEN,
             },
+            stderr=subprocess.DEVNULL,
         )
     )
 )
