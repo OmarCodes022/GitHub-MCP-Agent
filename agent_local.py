@@ -16,6 +16,10 @@ from mcp import StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 
+import json
+import urllib.request
+import urllib.error
+
 GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
 AWS_REGION = "us-east-1"
 MODEL_ID = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
@@ -23,6 +27,93 @@ MODEL_ID = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 console = Console()
 
 LOCAL_REPO_PATH = os.getcwd()
+
+def _gql(query, variables={}):
+    data = json.dumps({"query": query, "variables": variables}).encode()
+    req = urllib.request.Request("https://api.github.com/graphql", data=data, method="POST")
+    req.add_header("Authorization", f"Bearer {GITHUB_TOKEN}")
+    req.add_header("Content-Type", "application/json")
+    with urllib.request.urlopen(req) as r:
+        return json.loads(r.read())
+
+@tool
+def set_issue_priority(owner: str, repo: str, issue_number: int, priority: str) -> str:
+    """Set the Priority field on a GitHub issue. priority: urgent, high, medium, or low."""
+    p = priority.lower()
+    if p not in ("urgent", "high", "medium", "low"):
+        return "Error: priority must be urgent, high, medium, or low"
+    try:
+        lookup = _gql("""
+            query($owner: String!, $repo: String!, $num: Int!) {
+              repository(owner: $owner, name: $repo) { issue(number: $num) { id } }
+              organization(login: $owner) {
+                issueFields(first: 10) {
+                  nodes { ... on IssueFieldSingleSelect { id name options { id name } } }
+                }
+              }
+            }""", {"owner": owner, "repo": repo, "num": issue_number})
+        if "errors" in lookup:
+            return f"Error: {lookup['errors'][0]['message']}"
+        issue_id = lookup["data"]["repository"]["issue"]["id"]
+        pf = next((f for f in lookup["data"]["organization"]["issueFields"]["nodes"] if f.get("name") == "Priority"), None)
+        if not pf:
+            return "Priority field not found in org"
+        opt = next((o for o in pf["options"] if o["name"].lower() == p), None)
+        if not opt:
+            return f"Option '{p}' not found"
+        result = _gql("""
+            mutation($i: ID!, $f: ID!, $o: ID!) {
+              updateIssueFieldValue(input: {
+                issueId: $i
+                issueField: { fieldId: $f, singleSelectOptionId: $o }
+              }) { clientMutationId }
+            }""", {"i": issue_id, "f": pf["id"], "o": opt["id"]})
+        if "errors" in result:
+            return f"Error: {result['errors'][0]['message']}"
+        return f"Priority set to '{p}' on {owner}/{repo}#{issue_number}"
+    except urllib.error.HTTPError as e:
+        return f"HTTP {e.code}: {e.read().decode()}"
+    except Exception as e:
+        return f"Error: {e}"
+
+@tool
+def list_issues_with_priorities(owner: str, repo: str, state: str = "OPEN") -> str:
+    """List issues with their priority AND description in one call. Use this instead of list_issues whenever priorities matter. state: OPEN, CLOSED, or ALL."""
+    try:
+        result = _gql("""
+            query($owner: String!, $repo: String!, $state: [IssueState!]) {
+              repository(owner: $owner, name: $repo) {
+                issues(first: 100, states: $state, orderBy: {field: CREATED_AT, direction: DESC}) {
+                  nodes {
+                    number title body state
+                    issueFieldValues(first: 5) {
+                      nodes {
+                        ... on IssueFieldSingleSelectValue {
+                          name
+                          field { ... on IssueFieldSingleSelect { name } }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }""", {"owner": owner, "repo": repo, "state": [state] if state != "ALL" else ["OPEN", "CLOSED"]})
+        if "errors" in result:
+            return f"Error: {result['errors'][0]['message']}"
+        lines = []
+        for issue in result["data"]["repository"]["issues"]["nodes"]:
+            priority = "not set"
+            for fv in issue.get("issueFieldValues", {}).get("nodes", []):
+                if fv.get("field", {}).get("name") == "Priority":
+                    priority = fv.get("name", "not set").lower()
+                    break
+            body = (issue.get("body") or "").strip().replace("\n", " ")[:150]
+            lines.append(f"#{issue['number']} [{issue['state']}] {issue['title']} | Priority: {priority} | {body}")
+        return "\n".join(lines) or "No issues found"
+    except urllib.error.HTTPError as e:
+        return f"HTTP {e.code}: {e.read().decode()}"
+    except Exception as e:
+        return f"Error: {e}"
 
 @tool
 def read_local_file(path: str) -> str:
@@ -107,12 +198,12 @@ model = BedrockModel(
 
 try:
     with github_mcp_client:
-        tools = github_mcp_client.list_tools_sync()
+        tools = [t for t in github_mcp_client.list_tools_sync() if t.tool_name != "list_issues"]
 
         console.print()
         console.print(Rule("[bold green]GitHub MCP Agent[/bold green]"))
         repo_label = f"[bold]{current_repo}[/bold]" if current_repo else "[dim]none detected[/dim]"
-        local_tools = [read_local_file, list_local_files]
+        local_tools = [set_issue_priority, list_issues_with_priorities, read_local_file, list_local_files]
         total_tools = len(tools) + len(local_tools)
         console.print(f"  [dim]Loaded [bold]{total_tools}[/bold] tools  |  Repo: {repo_label}  |  Model: [bold]{MODEL_ID}[/bold]  |  Type 'exit' to quit[/dim]")
         console.print(Rule())
