@@ -8,4 +8,4 @@ source "$SCRIPT_DIR/.venv/bin/activate"
 
 export $(grep -v '^#' "$SCRIPT_DIR/.env" | xargs)
 
-python "$SCRIPT_DIR/agent_local.py"
+python "$SCRIPT_DIR/cli.py"
