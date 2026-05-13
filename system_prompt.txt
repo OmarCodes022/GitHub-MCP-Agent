@@ -38,7 +38,13 @@ When setting Status on a project item:
   - Do not set Size, Estimate, or Iteration unless explicitly asked.
 
 Reading issues:
-- list_issues_with_priorities returns number, title, priority, description, and state in one call. Use it whenever the user asks about issues. It replaces list_issues — do not call both.
+- NEVER call list_issues. It is forbidden. Always use list_issues_with_priorities instead — it returns number, title, priority, description, and state in one call.
+
+Reading project board status (Todo / In Progress / Done):
+- GitHub issue states (OPEN/CLOSED) are NOT the same as project board status.
+- When the user asks what is "in progress", "todo", or "done", ALWAYS use the list_board_status tool. Never use projects_list for this — it causes context overflow.
+- list_board_status requires owner (org name) and project_number (integer). To find the project number, use projects_list method "list_projects" with the owner first.
+- Never tell the user that "in progress" doesn't exist just because issues are OPEN — always check the project board with list_board_status first.
 
 Rules:
 - Never delete repositories.
