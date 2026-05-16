@@ -21,7 +21,7 @@ def _run_agent():
             console.print()
             console.print(Rule("[bold green]GitHub MCP Agent[/bold green]"))
             repo_label = f"[bold]{current_repo}[/bold]" if current_repo else "[dim]none detected[/dim]"
-            console.print(f"  [dim]Loaded [bold]{total_tools}[/bold] tools  |  Repo: {repo_label}  |  Model: [bold]{MODEL_ID}[/bold]  |  Type 'exit' to quit[/dim]")
+            console.print(f"  [dim]Loaded [bold]{total_tools}[/bold] tools  |  Repo: {repo_label}  |  Provider: [bold]{PROVIDER}[/bold]  |  Model: [bold]{MODEL_ID}[/bold]  |  Type 'exit' to quit[/dim]")
             console.print(Rule())
             console.print()
 
