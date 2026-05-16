@@ -27,6 +27,18 @@ def _build_model():
             raise RuntimeError("ANTHROPIC_API_KEY is not set. Run 'github-agent setup' to configure.")
         return AnthropicModel(model_id=MODEL_ID, max_tokens=8096)
 
+    if PROVIDER == "openai":
+        from strands.models.litellm import LiteLLMModel
+        if not os.environ.get("OPENAI_API_KEY"):
+            raise RuntimeError("OPENAI_API_KEY is not set. Run 'github-agent setup' to configure.")
+        return LiteLLMModel(model_id=f"openai/{MODEL_ID}")
+
+    if PROVIDER == "gemini":
+        from strands.models.litellm import LiteLLMModel
+        if not os.environ.get("GEMINI_API_KEY"):
+            raise RuntimeError("GEMINI_API_KEY is not set. Run 'github-agent setup' to configure.")
+        return LiteLLMModel(model_id=f"gemini/{MODEL_ID}")
+
     return BedrockModel(model_id=MODEL_ID, region_name=AWS_REGION)
 
 
