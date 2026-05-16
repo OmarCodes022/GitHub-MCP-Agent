@@ -13,6 +13,25 @@ console = Console()
 CONFIG_DIR = Path.home() / ".config" / "github-mcp-agent"
 CONFIG_FILE = CONFIG_DIR / ".env"
 
+BEDROCK_REGIONS = [
+    ("us-east-1", "N. Virginia - recommended"),
+    ("us-west-2", "Oregon"),
+    ("eu-west-1", "Ireland"),
+    ("eu-central-1", "Frankfurt"),
+    ("eu-west-3", "Paris"),
+    ("ap-northeast-1", "Tokyo"),
+    ("ap-southeast-1", "Singapore"),
+    ("ap-southeast-2", "Sydney"),
+    ("ca-central-1", "Canada"),
+    ("sa-east-1", "Sao Paulo"),
+]
+
+BEDROCK_MODELS = [
+    ("us.anthropic.claude-haiku-4-5-20251001-v1:0", "claude-haiku-4-5", "fastest, cheapest"),
+    ("us.anthropic.claude-sonnet-4-6", "claude-sonnet-4-6", "balanced"),
+    ("us.anthropic.claude-opus-4-7", "claude-opus-4-7", "most capable"),
+]
+
 
 def _check(label: str, ok: bool, hint: str = ""):
     if ok:
