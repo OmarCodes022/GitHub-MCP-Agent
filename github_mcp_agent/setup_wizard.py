@@ -32,6 +32,12 @@ BEDROCK_MODELS = [
     ("us.anthropic.claude-opus-4-7", "claude-opus-4-7", "most capable"),
 ]
 
+ANTHROPIC_MODELS = [
+    ("claude-haiku-4-5-20251001", "claude-haiku-4-5", "fastest"),
+    ("claude-sonnet-4-6", "claude-sonnet-4-6", "balanced"),
+    ("claude-opus-4-7", "claude-opus-4-7", "most capable"),
+]
+
 
 def _check(label: str, ok: bool, hint: str = ""):
     if ok:
