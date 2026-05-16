@@ -50,6 +50,16 @@ GEMINI_MODELS = [
     ("gemini-1.5-flash", "gemini-1.5-flash", "fast"),
 ]
 
+OLLAMA_POPULAR_MODELS = [
+    "llama3.2",
+    "llama3.1",
+    "mistral",
+    "gemma2",
+    "phi3",
+    "codellama",
+    "deepseek-r1",
+]
+
 
 def _check(label: str, ok: bool, hint: str = ""):
     if ok:
