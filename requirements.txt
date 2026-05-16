@@ -1,5 +1,0 @@
-boto3
-strands-agents
-mcp
-rich
-prompt_toolkit

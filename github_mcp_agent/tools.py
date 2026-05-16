@@ -7,14 +7,14 @@ import urllib.request
 
 from strands import tool
 
-GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
 LOCAL_REPO_PATH = os.getcwd()
 
 
 def _gql(query, variables={}):
+    token = os.environ["GITHUB_TOKEN"]
     data = json.dumps({"query": query, "variables": variables}).encode()
     req = urllib.request.Request("https://api.github.com/graphql", data=data, method="POST")
-    req.add_header("Authorization", f"Bearer {GITHUB_TOKEN}")
+    req.add_header("Authorization", f"Bearer {token}")
     req.add_header("Content-Type", "application/json")
     with urllib.request.urlopen(req) as r:
         return json.loads(r.read())
