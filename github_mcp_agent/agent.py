@@ -39,6 +39,11 @@ def _build_model():
             raise RuntimeError("GEMINI_API_KEY is not set. Run 'github-agent setup' to configure.")
         return LiteLLMModel(model_id=f"gemini/{MODEL_ID}")
 
+    if PROVIDER == "ollama":
+        from strands.models.litellm import LiteLLMModel
+        base_url = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
+        return LiteLLMModel(model_id=f"ollama/{MODEL_ID}", api_base=base_url)
+
     return BedrockModel(model_id=MODEL_ID, region_name=AWS_REGION)
 
 
