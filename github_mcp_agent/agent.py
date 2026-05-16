@@ -20,6 +20,10 @@ MODEL_ID = os.getenv("MODEL_ID", "us.anthropic.claude-haiku-4-5-20251001-v1:0")
 PROVIDER = os.getenv("PROVIDER", "bedrock")
 
 
+def _build_model():
+    return BedrockModel(model_id=MODEL_ID, region_name=AWS_REGION)
+
+
 def _load_system_prompt() -> tuple[str, str | None]:
     custom = _config_dir / "system_prompt.txt"
     if custom.exists():
