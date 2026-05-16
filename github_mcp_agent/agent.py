@@ -62,6 +62,23 @@ def _load_system_prompt() -> tuple[str, str | None]:
     return prompt, None
 
 
+def _make_ollama_callback():
+    import json as _json
+
+    def callback(**kwargs):
+        if "data" in kwargs:
+            text = kwargs["data"]
+            try:
+                parsed = _json.loads(text)
+                if isinstance(parsed, dict) and "text" in parsed:
+                    text = parsed["text"]
+            except Exception:
+                pass
+            print(text, end="", flush=True)
+
+    return callback
+
+
 @contextmanager
 def create_agent():
     token = os.environ.get("GITHUB_TOKEN")
@@ -92,9 +109,8 @@ def create_agent():
 
     with mcp_client:
         mcp_tools = mcp_client.list_tools_sync()
-        agent = Agent(
-            model=model,
-            tools=mcp_tools + local_tools,
-            system_prompt=system_prompt,
-        )
+        agent_kwargs = dict(model=model, tools=mcp_tools + local_tools, system_prompt=system_prompt)
+        if PROVIDER == "ollama":
+            agent_kwargs["callback_handler"] = _make_ollama_callback()
+        agent = Agent(**agent_kwargs)
         yield agent, current_repo, len(mcp_tools) + len(local_tools)
