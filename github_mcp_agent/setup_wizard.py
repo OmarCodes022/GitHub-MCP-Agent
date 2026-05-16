@@ -181,6 +181,17 @@ def _setup_bedrock() -> dict:
     return values
 
 
+def _setup_anthropic() -> dict:
+    console.print("  [dim]Get your key at: console.anthropic.com/settings/keys[/dim]")
+    key = _ask(questionary.password, "Anthropic API key (sk-ant-...):")
+    model_choices = [f"{name}  ({desc})" for _, name, desc in ANTHROPIC_MODELS]
+    model_display = _ask(questionary.select, "Model:", choices=model_choices)
+    return {
+        "ANTHROPIC_API_KEY": key,
+        "MODEL_ID": ANTHROPIC_MODELS[model_choices.index(model_display)][0],
+    }
+
+
 def _pull_docker_image():
     console.print("\n[bold]Pulling GitHub MCP Docker image...[/bold]")
     subprocess.run(["docker", "pull", "ghcr.io/github/github-mcp-server"], check=False)
