@@ -10,6 +10,7 @@ dependencies = [
     "rich",
     "python-dotenv",
     "questionary",
+    "anthropic",
 ]
 
 [project.scripts]
