@@ -38,6 +38,18 @@ ANTHROPIC_MODELS = [
     ("claude-opus-4-7", "claude-opus-4-7", "most capable"),
 ]
 
+OPENAI_MODELS = [
+    ("gpt-4o-mini", "gpt-4o-mini", "fast, cheap"),
+    ("gpt-4o", "gpt-4o", "flagship"),
+    ("gpt-4-turbo", "gpt-4-turbo", "legacy"),
+]
+
+GEMINI_MODELS = [
+    ("gemini-2.0-flash", "gemini-2.0-flash", "fast, recommended"),
+    ("gemini-1.5-pro", "gemini-1.5-pro", "most capable"),
+    ("gemini-1.5-flash", "gemini-1.5-flash", "fast"),
+]
+
 
 def _check(label: str, ok: bool, hint: str = ""):
     if ok:
