@@ -300,13 +300,13 @@ def run():
         choices=["AWS Bedrock", "Anthropic API", "OpenAI", "Google Gemini", "Local (Ollama)"],
     )
 
-    if not _check_prerequisites(need_aws=provider == "AWS Bedrock"):
+    provider_key = {"AWS Bedrock": "bedrock", "Anthropic API": "anthropic", "OpenAI": "openai", "Google Gemini": "gemini", "Local (Ollama)": "ollama"}[provider]
+
+    if not _check_prerequisites(provider=provider_key):
         console.print("\n[red]Fix the issues above before continuing.[/red]")
         sys.exit(1)
 
     console.print()
-
-    provider_key = {"AWS Bedrock": "bedrock", "Anthropic API": "anthropic", "OpenAI": "openai", "Google Gemini": "gemini"}[provider]
 
     if provider == "AWS Bedrock":
         provider_values = _setup_bedrock()
