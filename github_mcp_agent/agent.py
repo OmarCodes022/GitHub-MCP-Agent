@@ -21,6 +21,12 @@ PROVIDER = os.getenv("PROVIDER", "bedrock")
 
 
 def _build_model():
+    if PROVIDER == "anthropic":
+        from strands.models.anthropic import AnthropicModel
+        if not os.environ.get("ANTHROPIC_API_KEY"):
+            raise RuntimeError("ANTHROPIC_API_KEY is not set. Run 'github-agent setup' to configure.")
+        return AnthropicModel(model_id=MODEL_ID, max_tokens=8096)
+
     return BedrockModel(model_id=MODEL_ID, region_name=AWS_REGION)
 
 
