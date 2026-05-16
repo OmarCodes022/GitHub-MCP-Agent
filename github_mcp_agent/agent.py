@@ -17,6 +17,7 @@ load_dotenv()
 
 AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 MODEL_ID = os.getenv("MODEL_ID", "us.anthropic.claude-haiku-4-5-20251001-v1:0")
+PROVIDER = os.getenv("PROVIDER", "bedrock")
 
 
 def _load_system_prompt() -> tuple[str, str | None]:
