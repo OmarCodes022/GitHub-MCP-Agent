@@ -227,6 +227,37 @@ def _setup_gemini() -> dict:
     }
 
 
+def _setup_ollama() -> dict:
+    result = subprocess.run(["ollama", "list"], capture_output=True, text=True)
+    installed = []
+    if result.returncode == 0:
+        for line in result.stdout.splitlines()[1:]:
+            parts = line.split()
+            if parts:
+                installed.append(parts[0])
+
+    if installed:
+        choices = installed + ["other (type manually)"]
+        choice = _ask(questionary.select, "Model:", choices=choices)
+        if choice == "other (type manually)":
+            model = _ask(questionary.text, "Model name (e.g. llama3.2):")
+        else:
+            model = choice.split(":")[0]
+    else:
+        console.print("  [dim]No models installed yet. Pick one to pull:[/dim]")
+        choices = OLLAMA_POPULAR_MODELS + ["other (type manually)"]
+        choice = _ask(questionary.select, "Model:", choices=choices)
+        if choice == "other (type manually)":
+            model = _ask(questionary.text, "Model name:")
+        else:
+            model = choice
+        console.print(f"\n  Running [bold]ollama pull {model}[/bold]")
+        subprocess.run(["ollama", "pull", model])
+
+    base_url = _ask(questionary.text, "Ollama base URL:", default="http://localhost:11434")
+    return {"MODEL_ID": model, "OLLAMA_BASE_URL": base_url}
+
+
 def _pull_docker_image():
     console.print("\n[bold]Pulling GitHub MCP Docker image...[/bold]")
     subprocess.run(["docker", "pull", "ghcr.io/github/github-mcp-server"], check=False)
