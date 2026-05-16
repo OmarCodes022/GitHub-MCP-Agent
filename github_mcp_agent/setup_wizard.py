@@ -59,19 +59,16 @@ def _check(label: str, ok: bool, hint: str = ""):
     return ok
 
 
-def _check_prerequisites() -> bool:
+def _check_prerequisites(need_aws: bool = True) -> bool:
     console.print("\n[bold]Checking prerequisites...[/bold]")
     ok = True
-
     py = sys.version_info >= (3, 10)
     ok &= _check("Python >= 3.10", py, f"found {sys.version.split()[0]}")
-
-    docker_installed = subprocess.run(["docker", "info"], capture_output=True).returncode == 0
-    ok &= _check("Docker installed and running", docker_installed, "install Docker from docker.com")
-
-    aws = subprocess.run(["aws", "--version"], capture_output=True).returncode == 0
-    ok &= _check("AWS CLI installed", aws, "install from aws.amazon.com/cli")
-
+    docker = subprocess.run(["docker", "info"], capture_output=True).returncode == 0
+    ok &= _check("Docker installed and running", docker, "install Docker from docker.com")
+    if need_aws:
+        aws = subprocess.run(["aws", "--version"], capture_output=True).returncode == 0
+        ok &= _check("AWS CLI installed", aws, "install from aws.amazon.com/cli")
     return ok
 
 
