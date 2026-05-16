@@ -69,16 +69,19 @@ def _check(label: str, ok: bool, hint: str = ""):
     return ok
 
 
-def _check_prerequisites(need_aws: bool = True) -> bool:
+def _check_prerequisites(provider: str = "bedrock") -> bool:
     console.print("\n[bold]Checking prerequisites...[/bold]")
     ok = True
     py = sys.version_info >= (3, 10)
     ok &= _check("Python >= 3.10", py, f"found {sys.version.split()[0]}")
     docker = subprocess.run(["docker", "info"], capture_output=True).returncode == 0
     ok &= _check("Docker installed and running", docker, "install Docker from docker.com")
-    if need_aws:
+    if provider == "bedrock":
         aws = subprocess.run(["aws", "--version"], capture_output=True).returncode == 0
         ok &= _check("AWS CLI installed", aws, "install from aws.amazon.com/cli")
+    if provider == "ollama":
+        ollama_ok = subprocess.run(["ollama", "list"], capture_output=True).returncode == 0
+        ok &= _check("Ollama installed and running", ollama_ok, "install from ollama.com then run: ollama serve")
     return ok
 
 
