@@ -297,7 +297,7 @@ def run():
     provider = _ask(
         questionary.select,
         "AI provider:",
-        choices=["AWS Bedrock", "Anthropic API", "OpenAI", "Google Gemini"],
+        choices=["AWS Bedrock", "Anthropic API", "OpenAI", "Google Gemini", "Local (Ollama)"],
     )
 
     if not _check_prerequisites(need_aws=provider == "AWS Bedrock"):
