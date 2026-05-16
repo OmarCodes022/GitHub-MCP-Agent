@@ -15,7 +15,7 @@ CONFIG_DIR = Path.home() / ".config" / "github-mcp-agent"
 
 
 def _run_agent():
-    from github_mcp_agent.agent import MODEL_ID, create_agent
+    from github_mcp_agent.agent import MODEL_ID, PROVIDER, create_agent
     try:
         with create_agent() as (agent, current_repo, total_tools):
             console.print()
