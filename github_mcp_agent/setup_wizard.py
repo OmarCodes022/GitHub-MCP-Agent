@@ -192,6 +192,28 @@ def _setup_anthropic() -> dict:
     }
 
 
+def _setup_openai() -> dict:
+    console.print("  [dim]Get your key at: platform.openai.com/api-keys[/dim]")
+    key = _ask(questionary.password, "OpenAI API key (sk-...):")
+    model_choices = [f"{name}  ({desc})" for _, name, desc in OPENAI_MODELS]
+    model_display = _ask(questionary.select, "Model:", choices=model_choices)
+    return {
+        "OPENAI_API_KEY": key,
+        "MODEL_ID": OPENAI_MODELS[model_choices.index(model_display)][0],
+    }
+
+
+def _setup_gemini() -> dict:
+    console.print("  [dim]Get your key at: aistudio.google.com/apikey[/dim]")
+    key = _ask(questionary.password, "Google AI Studio API key:")
+    model_choices = [f"{name}  ({desc})" for _, name, desc in GEMINI_MODELS]
+    model_display = _ask(questionary.select, "Model:", choices=model_choices)
+    return {
+        "GEMINI_API_KEY": key,
+        "MODEL_ID": GEMINI_MODELS[model_choices.index(model_display)][0],
+    }
+
+
 def _pull_docker_image():
     console.print("\n[bold]Pulling GitHub MCP Docker image...[/bold]")
     subprocess.run(["docker", "pull", "ghcr.io/github/github-mcp-server"], check=False)
