@@ -234,55 +234,50 @@ def _write_config(values: dict):
 
 def run():
     console.print()
-    console.print(Rule("[bold green]GitHub MCP Agent — Setup[/bold green]"))
+    console.print(Rule("[bold green]GitHub MCP Agent - Setup[/bold green]"))
 
-    if not _check_prerequisites():
-        console.print("\n[red]Fix the issues above before continuing.[/red]")
-        sys.exit(1)
-
-    # GitHub token
-    console.print("\n[bold]GitHub Personal Access Token[/bold]")
-    console.print("  [dim]Create one at: github.com/settings/tokens[/dim]")
+    console.print()
+    console.print("  [dim]Create a token at: github.com/settings/tokens[/dim]")
     console.print("  [dim]Required scopes: repo, read:org, project[/dim]")
-    token = _prompt("Paste your token", secret=True)
+    token = _ask(questionary.password, "GitHub Personal Access Token:")
     if token:
         console.print("  Validating...", end=" ")
         if _validate_github_token(token):
             console.print("[green]valid[/green]")
         else:
-            console.print("[red]invalid — check the token and scopes[/red]")
+            console.print("[red]invalid - check the token and scopes[/red]")
             sys.exit(1)
 
-    # AWS profile
-    profiles = _list_aws_profiles()
-    console.print("\n[bold]AWS Profile[/bold]")
-    if profiles:
-        console.print(f"  [dim]Available: {', '.join(profiles)}[/dim]")
-    aws_profile = _prompt("Profile name", default="default")
-    console.print("  Validating...", end=" ")
-    if _validate_aws_profile(aws_profile):
-        console.print("[green]valid[/green]")
-    else:
-        console.print("[red]invalid — check your AWS credentials[/red]")
+    console.print()
+
+    provider = _ask(
+        questionary.select,
+        "AI provider:",
+        choices=["AWS Bedrock", "Anthropic API", "OpenAI", "Google Gemini"],
+    )
+
+    if not _check_prerequisites(need_aws=provider == "AWS Bedrock"):
+        console.print("\n[red]Fix the issues above before continuing.[/red]")
         sys.exit(1)
 
-    # Region and model
-    aws_region = _prompt("AWS Region", default="us-east-1")
-    model_id = _prompt("Bedrock Model ID", default="us.anthropic.claude-haiku-4-5-20251001-v1:0")
+    console.print()
 
-    # Write config
-    _write_config({
-        "GITHUB_TOKEN": token,
-        "AWS_PROFILE": aws_profile,
-        "AWS_REGION": aws_region,
-        "MODEL_ID": model_id,
-    })
+    provider_key = {"AWS Bedrock": "bedrock", "Anthropic API": "anthropic", "OpenAI": "openai", "Google Gemini": "gemini"}[provider]
+
+    if provider == "AWS Bedrock":
+        provider_values = _setup_bedrock()
+    elif provider == "Anthropic API":
+        provider_values = _setup_anthropic()
+    elif provider == "OpenAI":
+        provider_values = _setup_openai()
+    else:
+        provider_values = _setup_gemini()
+
+    _write_config({"GITHUB_TOKEN": token, "PROVIDER": provider_key, **provider_values})
     console.print(f"\n  [dim]Config saved to {CONFIG_FILE}[/dim]")
 
-    # Docker image
     _pull_docker_image()
 
-    # Done
     console.print()
     console.print(Rule("[bold green]Setup complete[/bold green]"))
     console.print()
