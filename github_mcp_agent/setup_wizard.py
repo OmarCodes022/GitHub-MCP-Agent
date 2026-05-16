@@ -112,11 +112,73 @@ def _list_aws_profiles() -> list[str]:
 def _validate_aws_profile(profile: str) -> bool:
     env = os.environ.copy()
     env["AWS_PROFILE"] = profile
-    result = subprocess.run(
-        ["aws", "sts", "get-caller-identity"],
-        capture_output=True, env=env
-    )
-    return result.returncode == 0
+    return subprocess.run(["aws", "sts", "get-caller-identity"], capture_output=True, env=env).returncode == 0
+
+
+def _setup_bedrock() -> dict:
+    values = {}
+
+    while True:
+        cred_method = _ask(
+            questionary.select,
+            "AWS credentials:",
+            choices=[
+                "Use existing profile",
+                "Enter access keys directly",
+                "AWS SSO / browser login",
+            ],
+        )
+
+        if cred_method == "Use existing profile":
+            profiles = _list_aws_profiles()
+            choices = profiles + ["other (type manually)"] if profiles else ["other (type manually)"]
+            choice = _ask(questionary.select, "AWS profile:", choices=choices)
+            if choice == "other (type manually)":
+                profile = _ask(questionary.text, "Profile name:", default="default")
+            else:
+                profile = choice
+            console.print("  Validating...", end=" ")
+            if _validate_aws_profile(profile):
+                console.print("[green]valid[/green]")
+                values["AWS_PROFILE"] = profile
+                break
+            else:
+                console.print("[red]invalid - check your AWS credentials[/red]")
+
+        elif cred_method == "Enter access keys directly":
+            values["AWS_ACCESS_KEY_ID"] = _ask(questionary.text, "AWS Access Key ID:")
+            values["AWS_SECRET_ACCESS_KEY"] = _ask(questionary.password, "AWS Secret Access Key:")
+            session_token = _ask(questionary.text, "AWS Session Token (leave blank if none):")
+            if session_token:
+                values["AWS_SESSION_TOKEN"] = session_token
+            break
+
+        elif cred_method == "AWS SSO / browser login":
+            profiles = _list_aws_profiles()
+            choices = profiles + ["other (type manually)"] if profiles else ["other (type manually)"]
+            choice = _ask(questionary.select, "SSO profile to use:", choices=choices)
+            if choice == "other (type manually)":
+                profile = _ask(questionary.text, "Profile name:")
+            else:
+                profile = choice
+            console.print(f"\n  Running [bold]aws sso login --profile {profile}[/bold]")
+            result = subprocess.run(["aws", "sso", "login", "--profile", profile])
+            if result.returncode == 0:
+                values["AWS_PROFILE"] = profile
+                break
+            console.print("[red]SSO login failed - profile may not be configured for SSO.[/red]")
+            console.print("[dim]  Run: aws configure sso --profile <name>[/dim]")
+            console.print("[dim]  Or pick a different credential method below.[/dim]\n")
+
+    region_choices = [f"{r}  ({label})" for r, label in BEDROCK_REGIONS]
+    region_display = _ask(questionary.select, "AWS Region:", choices=region_choices)
+    values["AWS_REGION"] = region_display.split()[0]
+
+    model_choices = [f"{name}  ({desc})  ->  {mid}" for mid, name, desc in BEDROCK_MODELS]
+    model_display = _ask(questionary.select, "Model:", choices=model_choices)
+    values["MODEL_ID"] = BEDROCK_MODELS[model_choices.index(model_display)][0]
+
+    return values
 
 
 def _pull_docker_image():
