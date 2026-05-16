@@ -17,6 +17,29 @@ load_dotenv()
 
 AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 MODEL_ID = os.getenv("MODEL_ID", "us.anthropic.claude-haiku-4-5-20251001-v1:0")
+PROVIDER = os.getenv("PROVIDER", "bedrock")
+
+
+def _build_model():
+    if PROVIDER == "anthropic":
+        from strands.models.anthropic import AnthropicModel
+        if not os.environ.get("ANTHROPIC_API_KEY"):
+            raise RuntimeError("ANTHROPIC_API_KEY is not set. Run 'github-agent setup' to configure.")
+        return AnthropicModel(model_id=MODEL_ID, max_tokens=8096)
+
+    if PROVIDER == "openai":
+        from strands.models.litellm import LiteLLMModel
+        if not os.environ.get("OPENAI_API_KEY"):
+            raise RuntimeError("OPENAI_API_KEY is not set. Run 'github-agent setup' to configure.")
+        return LiteLLMModel(model_id=f"openai/{MODEL_ID}")
+
+    if PROVIDER == "gemini":
+        from strands.models.litellm import LiteLLMModel
+        if not os.environ.get("GEMINI_API_KEY"):
+            raise RuntimeError("GEMINI_API_KEY is not set. Run 'github-agent setup' to configure.")
+        return LiteLLMModel(model_id=f"gemini/{MODEL_ID}")
+
+    return BedrockModel(model_id=MODEL_ID, region_name=AWS_REGION)
 
 
 def _load_system_prompt() -> tuple[str, str | None]:
@@ -59,7 +82,7 @@ def create_agent():
         )
     )
 
-    model = BedrockModel(model_id=MODEL_ID, region_name=AWS_REGION)
+    model = _build_model()
     system_prompt, current_repo = _load_system_prompt()
 
     with mcp_client:

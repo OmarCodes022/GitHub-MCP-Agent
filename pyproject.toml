@@ -9,6 +9,9 @@ dependencies = [
     "mcp",
     "rich",
     "python-dotenv",
+    "questionary",
+    "anthropic",
+    "litellm",
 ]
 
 [project.scripts]
