@@ -82,7 +82,7 @@ def create_agent():
         )
     )
 
-    model = BedrockModel(model_id=MODEL_ID, region_name=AWS_REGION)
+    model = _build_model()
     system_prompt, current_repo = _load_system_prompt()
 
     with mcp_client:
