@@ -50,6 +50,16 @@ GEMINI_MODELS = [
     ("gemini-1.5-flash", "gemini-1.5-flash", "fast"),
 ]
 
+OLLAMA_POPULAR_MODELS = [
+    "llama3.2",
+    "llama3.1",
+    "mistral",
+    "gemma2",
+    "phi3",
+    "codellama",
+    "deepseek-r1",
+]
+
 
 def _check(label: str, ok: bool, hint: str = ""):
     if ok:
@@ -59,16 +69,19 @@ def _check(label: str, ok: bool, hint: str = ""):
     return ok
 
 
-def _check_prerequisites(need_aws: bool = True) -> bool:
+def _check_prerequisites(provider: str = "bedrock") -> bool:
     console.print("\n[bold]Checking prerequisites...[/bold]")
     ok = True
     py = sys.version_info >= (3, 10)
     ok &= _check("Python >= 3.10", py, f"found {sys.version.split()[0]}")
     docker = subprocess.run(["docker", "info"], capture_output=True).returncode == 0
     ok &= _check("Docker installed and running", docker, "install Docker from docker.com")
-    if need_aws:
+    if provider == "bedrock":
         aws = subprocess.run(["aws", "--version"], capture_output=True).returncode == 0
         ok &= _check("AWS CLI installed", aws, "install from aws.amazon.com/cli")
+    if provider == "ollama":
+        ollama_ok = subprocess.run(["ollama", "list"], capture_output=True).returncode == 0
+        ok &= _check("Ollama installed and running", ollama_ok, "install from ollama.com then run: ollama serve")
     return ok
 
 
@@ -214,6 +227,37 @@ def _setup_gemini() -> dict:
     }
 
 
+def _setup_ollama() -> dict:
+    result = subprocess.run(["ollama", "list"], capture_output=True, text=True)
+    installed = []
+    if result.returncode == 0:
+        for line in result.stdout.splitlines()[1:]:
+            parts = line.split()
+            if parts:
+                installed.append(parts[0])
+
+    if installed:
+        choices = installed + ["other (type manually)"]
+        choice = _ask(questionary.select, "Model:", choices=choices)
+        if choice == "other (type manually)":
+            model = _ask(questionary.text, "Model name (e.g. llama3.2):")
+        else:
+            model = choice
+    else:
+        console.print("  [dim]No models installed yet. Pick one to pull:[/dim]")
+        choices = OLLAMA_POPULAR_MODELS + ["other (type manually)"]
+        choice = _ask(questionary.select, "Model:", choices=choices)
+        if choice == "other (type manually)":
+            model = _ask(questionary.text, "Model name:")
+        else:
+            model = choice
+        console.print(f"\n  Running [bold]ollama pull {model}[/bold]")
+        subprocess.run(["ollama", "pull", model])
+
+    base_url = _ask(questionary.text, "Ollama base URL:", default="http://localhost:11434")
+    return {"MODEL_ID": model, "OLLAMA_BASE_URL": base_url}
+
+
 def _pull_docker_image():
     console.print("\n[bold]Pulling GitHub MCP Docker image...[/bold]")
     subprocess.run(["docker", "pull", "ghcr.io/github/github-mcp-server"], check=False)
@@ -253,16 +297,16 @@ def run():
     provider = _ask(
         questionary.select,
         "AI provider:",
-        choices=["AWS Bedrock", "Anthropic API", "OpenAI", "Google Gemini"],
+        choices=["AWS Bedrock", "Anthropic API", "OpenAI", "Google Gemini", "Local (Ollama)"],
     )
 
-    if not _check_prerequisites(need_aws=provider == "AWS Bedrock"):
+    provider_key = {"AWS Bedrock": "bedrock", "Anthropic API": "anthropic", "OpenAI": "openai", "Google Gemini": "gemini", "Local (Ollama)": "ollama"}[provider]
+
+    if not _check_prerequisites(provider=provider_key):
         console.print("\n[red]Fix the issues above before continuing.[/red]")
         sys.exit(1)
 
     console.print()
-
-    provider_key = {"AWS Bedrock": "bedrock", "Anthropic API": "anthropic", "OpenAI": "openai", "Google Gemini": "gemini"}[provider]
 
     if provider == "AWS Bedrock":
         provider_values = _setup_bedrock()
@@ -270,8 +314,10 @@ def run():
         provider_values = _setup_anthropic()
     elif provider == "OpenAI":
         provider_values = _setup_openai()
-    else:
+    elif provider == "Google Gemini":
         provider_values = _setup_gemini()
+    else:
+        provider_values = _setup_ollama()
 
     _write_config({"GITHUB_TOKEN": token, "PROVIDER": provider_key, **provider_values})
     console.print(f"\n  [dim]Config saved to {CONFIG_FILE}[/dim]")

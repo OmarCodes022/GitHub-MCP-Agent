@@ -39,6 +39,11 @@ def _build_model():
             raise RuntimeError("GEMINI_API_KEY is not set. Run 'github-agent setup' to configure.")
         return LiteLLMModel(model_id=f"gemini/{MODEL_ID}")
 
+    if PROVIDER == "ollama":
+        from strands.models.litellm import LiteLLMModel
+        base_url = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
+        return LiteLLMModel(model_id=f"ollama/{MODEL_ID}", params={"api_base": base_url})
+
     return BedrockModel(model_id=MODEL_ID, region_name=AWS_REGION)
 
 
@@ -55,6 +60,23 @@ def _load_system_prompt() -> tuple[str, str | None]:
         prompt += f"\n\nThe user is currently working in the GitHub repository: {repo}. Default to this repository for all actions unless the user explicitly specifies another."
         return prompt, repo
     return prompt, None
+
+
+def _make_ollama_callback():
+    import json as _json
+
+    def callback(**kwargs):
+        if "data" in kwargs:
+            text = kwargs["data"]
+            try:
+                parsed = _json.loads(text)
+                if isinstance(parsed, dict) and "text" in parsed:
+                    text = parsed["text"]
+            except Exception:
+                pass
+            print(text, end="", flush=True)
+
+    return callback
 
 
 @contextmanager
@@ -87,9 +109,8 @@ def create_agent():
 
     with mcp_client:
         mcp_tools = mcp_client.list_tools_sync()
-        agent = Agent(
-            model=model,
-            tools=mcp_tools + local_tools,
-            system_prompt=system_prompt,
-        )
+        agent_kwargs = dict(model=model, tools=mcp_tools + local_tools, system_prompt=system_prompt)
+        if PROVIDER == "ollama":
+            agent_kwargs["callback_handler"] = _make_ollama_callback()
+        agent = Agent(**agent_kwargs)
         yield agent, current_repo, len(mcp_tools) + len(local_tools)
