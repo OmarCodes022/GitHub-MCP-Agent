@@ -242,7 +242,7 @@ def _setup_ollama() -> dict:
         if choice == "other (type manually)":
             model = _ask(questionary.text, "Model name (e.g. llama3.2):")
         else:
-            model = choice.split(":")[0]
+            model = choice
     else:
         console.print("  [dim]No models installed yet. Pick one to pull:[/dim]")
         choices = OLLAMA_POPULAR_MODELS + ["other (type manually)"]
