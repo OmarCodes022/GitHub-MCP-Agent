@@ -72,22 +72,16 @@ def _check_prerequisites(need_aws: bool = True) -> bool:
     return ok
 
 
-def _prompt(label: str, default: str = "", secret: bool = False) -> str:
-    if default:
-        display = f"[dim](leave blank to keep current)[/dim]"
-    else:
-        display = ""
-    console.print(f"\n[bold]{label}[/bold] {display}")
+def _ask(fn, *args, **kwargs):
     try:
-        if secret:
-            import getpass
-            val = getpass.getpass("  > ")
-        else:
-            val = input("  > ").strip()
+        val = fn(*args, **kwargs).ask()
     except (KeyboardInterrupt, EOFError):
         console.print("\n[yellow]Setup cancelled.[/yellow]")
         sys.exit(0)
-    return val or default
+    if val is None:
+        console.print("\n[yellow]Setup cancelled.[/yellow]")
+        sys.exit(0)
+    return val
 
 
 def _validate_github_token(token: str) -> bool:
