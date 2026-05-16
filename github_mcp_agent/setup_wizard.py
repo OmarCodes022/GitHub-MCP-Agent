@@ -5,6 +5,7 @@ import urllib.request
 import urllib.error
 from pathlib import Path
 
+import questionary
 from rich.console import Console
 from rich.rule import Rule
 
