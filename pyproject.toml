@@ -9,6 +9,7 @@ dependencies = [
     "mcp",
     "rich",
     "python-dotenv",
+    "questionary",
 ]
 
 [project.scripts]
