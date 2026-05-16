@@ -42,7 +42,7 @@ def _build_model():
     if PROVIDER == "ollama":
         from strands.models.litellm import LiteLLMModel
         base_url = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
-        return LiteLLMModel(model_id=f"ollama/{MODEL_ID}", api_base=base_url)
+        return LiteLLMModel(model_id=f"ollama/{MODEL_ID}", params={"api_base": base_url})
 
     return BedrockModel(model_id=MODEL_ID, region_name=AWS_REGION)
 
