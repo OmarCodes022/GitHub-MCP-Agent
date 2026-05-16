@@ -314,8 +314,10 @@ def run():
         provider_values = _setup_anthropic()
     elif provider == "OpenAI":
         provider_values = _setup_openai()
-    else:
+    elif provider == "Google Gemini":
         provider_values = _setup_gemini()
+    else:
+        provider_values = _setup_ollama()
 
     _write_config({"GITHUB_TOKEN": token, "PROVIDER": provider_key, **provider_values})
     console.print(f"\n  [dim]Config saved to {CONFIG_FILE}[/dim]")
