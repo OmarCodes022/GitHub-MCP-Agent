@@ -332,6 +332,8 @@ def run():
         provider_values = _setup_openai()
     elif provider == "Google Gemini":
         provider_values = _setup_gemini()
+    elif provider == "GitHub Copilot":
+        provider_values = _setup_copilot()
     else:
         provider_values = _setup_ollama()
 
