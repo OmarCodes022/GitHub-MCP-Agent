@@ -27,7 +27,7 @@ uv tool install .   # or: pip install .
 github-agent setup
 ```
 
-Interactive wizard — picks up from where you are:
+Interactive wizard:
 
 1. GitHub token (validated immediately)
 2. AI provider — choose one:
@@ -35,8 +35,9 @@ Interactive wizard — picks up from where you are:
    - **Anthropic API** — API key from console.anthropic.com
    - **OpenAI** — API key from platform.openai.com
    - **Google Gemini** — API key from aistudio.google.com
+   - **GitHub Copilot** — uses your GitHub token, requires a Copilot subscription
    - **Local (Ollama)** — picks from your installed models, no API key needed
-3. Region + model (scrollable menus)
+3. Model selection (scrollable menu)
 4. Pulls the GitHub MCP Docker image
 
 Config saved to `~/.config/github-mcp-agent/.env`.
@@ -46,10 +47,14 @@ Config saved to `~/.config/github-mcp-agent/.env`.
 ## Usage
 
 ```bash
-github-agent          # start the agent
-github-agent setup    # re-run setup (change provider, credentials, model)
-github-agent config   # edit config file in $EDITOR
-github-agent prompt   # customize the system prompt in $EDITOR
+github-agent            # start the agent
+github-agent setup      # full setup wizard
+github-agent provider   # switch AI provider and model
+github-agent model      # switch model within current provider
+github-agent token      # update GitHub token
+github-agent config     # edit config file in $EDITOR
+github-agent prompt     # customize the system prompt in $EDITOR
+github-agent -v         # start with verbose tool output
 ```
 
 ---
@@ -67,6 +72,8 @@ github-agent prompt   # customize the system prompt in $EDITOR
 
 **For Ollama:** install from [ollama.com](https://ollama.com), run `ollama serve`. Models with good tool-calling support: `qwen2.5`, `llama3.1`, `mistral`.
 
+**For GitHub Copilot:** requires an active Copilot subscription (student pack, individual, or business).
+
 ---
 
 ## How it works
@@ -77,14 +84,14 @@ You (terminal)
     ▼
 github-agent (CLI)
     │
-    ├── AI model (Bedrock / Anthropic / OpenAI / Gemini / Ollama)
+    ├── AI model (Bedrock / Anthropic / OpenAI / Gemini / Copilot / Ollama)
     │
     └── GitHub MCP Server (Docker)
             │
             └── GitHub API
 ```
 
-Uses the [Strands Agents SDK](https://github.com/strands-agents/sdk-python) with the [GitHub MCP server](https://github.com/github/github-mcp-server). Custom tools cover GitHub Projects v2 priority fields and board status.
+Uses the [Strands Agents SDK](https://github.com/strands-agents/sdk-python) with the [GitHub MCP server](https://github.com/github/github-mcp-server).
 
 ---
 
@@ -96,6 +103,6 @@ Uses the [Strands Agents SDK](https://github.com/strands-agents/sdk-python) with
 
 **Bedrock access denied** — check IAM permissions and model access in your region
 
-**Ollama model not found** — run `ollama list` to confirm the model name, re-run setup
+**Ollama model not found** — run `ollama list` to confirm the model name, re-run `github-agent model`
 
 **`No module named github_mcp_agent`** — reinstall with `uv tool install .` from the project directory
