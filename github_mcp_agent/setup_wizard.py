@@ -313,7 +313,7 @@ def run():
     provider = _ask(
         questionary.select,
         "AI provider:",
-        choices=["AWS Bedrock", "Anthropic API", "OpenAI", "Google Gemini", "Local (Ollama)"],
+        choices=["AWS Bedrock", "Anthropic API", "OpenAI", "Google Gemini", "GitHub Copilot", "Local (Ollama)"],
     )
 
     provider_key = {"AWS Bedrock": "bedrock", "Anthropic API": "anthropic", "OpenAI": "openai", "Google Gemini": "gemini", "Local (Ollama)": "ollama"}[provider]
