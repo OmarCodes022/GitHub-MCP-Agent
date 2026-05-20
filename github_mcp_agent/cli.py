@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 import click
+import questionary
 from rich.console import Console
 from rich.rule import Rule
 from rich.text import Text
@@ -14,11 +15,36 @@ console = Console()
 
 CONFIG_DIR = Path.home() / ".config" / "github-mcp-agent"
 
+_PROVIDER_CHOICES = [
+    "AWS Bedrock", "Anthropic API", "OpenAI", "Google Gemini", "GitHub Copilot", "Local (Ollama)"
+]
+_PROVIDER_KEY = {
+    "AWS Bedrock": "bedrock",
+    "Anthropic API": "anthropic",
+    "OpenAI": "openai",
+    "Google Gemini": "gemini",
+    "GitHub Copilot": "copilot",
+    "Local (Ollama)": "ollama",
+}
 
-def _run_agent():
+
+def _pick_model_for_provider(provider: str, _ask) -> tuple[str, str]:
+    import github_mcp_agent.providers as pkg
+    mod = getattr(pkg, provider)
+    console.print(f"  [dim]Provider: {provider}  (to switch, run: github-agent provider)[/dim]")
+    if provider == "ollama":
+        model_id = mod.pick_model(_ask)
+    else:
+        model_choices = [f"{name}  ({desc})" for _, name, desc in mod.MODELS]
+        model_display = _ask(questionary.select, "Model:", choices=model_choices)
+        model_id = mod.MODELS[model_choices.index(model_display)][0]
+    return provider, model_id
+
+
+def _run_agent(verbose: bool = False):
     from github_mcp_agent.agent import MODEL_ID, PROVIDER, create_agent
     try:
-        with create_agent() as (agent, current_repo, total_tools):
+        with create_agent(verbose=verbose) as (agent, current_repo, total_tools):
             console.print()
             console.print(Rule("[bold green]GitHub MCP Agent[/bold green]"))
             repo_label = f"[bold]{current_repo}[/bold]" if current_repo else "[dim]none detected[/dim]"
@@ -85,12 +111,13 @@ def _open_prompt():
     subprocess.run([editor, str(prompt_file)])
 
 
-@click.group(invoke_without_command=True)
+@click.group(invoke_without_command=True, context_settings={"help_option_names": ["-h", "--help"]})
+@click.option("--verbose", "-v", is_flag=True, default=False, help="Print tool calls as they happen")
 @click.pass_context
-def cli(ctx):
+def cli(ctx, verbose):
     """GitHub MCP Agent - talk to your repos in plain English."""
     if ctx.invoked_subcommand is None:
-        _run_agent()
+        _run_agent(verbose=verbose)
 
 
 @cli.command()
@@ -98,6 +125,43 @@ def setup():
     """Run the interactive setup wizard."""
     from github_mcp_agent.setup_wizard import run
     run()
+
+
+@cli.command(name="provider")
+def switch_provider():
+    """Switch AI provider - pick credentials + model and save to config."""
+    from github_mcp_agent.setup_wizard import _ask, _write_config
+    from github_mcp_agent import providers as _providers
+    provider_display = _ask(questionary.select, "Provider:", choices=_PROVIDER_CHOICES)
+    provider_key = _PROVIDER_KEY[provider_display]
+    provider_values = _providers.setup(provider_key, _ask)
+    _write_config({"PROVIDER": provider_key, **provider_values})
+    console.print("  [green]Saved.[/green]")
+
+
+@cli.command(name="model")
+def switch_model():
+    """Pick a model for the current provider and save to config."""
+    from github_mcp_agent.agent import PROVIDER
+    from github_mcp_agent.setup_wizard import _ask, _write_config
+    _, effective_model = _pick_model_for_provider(PROVIDER, _ask)
+    _write_config({"MODEL_ID": effective_model})
+    console.print(f"  [green]Saved:[/green] model={effective_model}")
+
+
+@cli.command()
+def token():
+    """Update your GitHub Personal Access Token."""
+    from github_mcp_agent.setup_wizard import _ask, _validate_github_token, _write_config
+    new_token = _ask(questionary.password, "GitHub Personal Access Token:")
+    console.print("  Validating...", end=" ")
+    if _validate_github_token(new_token):
+        console.print("[green]valid[/green]")
+        _write_config({"GITHUB_TOKEN": new_token})
+        console.print("  [green]Saved.[/green]")
+    else:
+        console.print("[red]invalid - check the token and scopes[/red]")
+        sys.exit(1)
 
 
 @cli.command()
