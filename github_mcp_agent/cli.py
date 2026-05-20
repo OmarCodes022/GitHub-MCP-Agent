@@ -31,7 +31,7 @@ _PROVIDER_KEY = {
 def _pick_model_for_provider(provider: str, _ask) -> tuple[str, str]:
     import github_mcp_agent.providers as pkg
     mod = getattr(pkg, provider)
-    console.print(f"  [dim]Provider: {provider}[/dim]")
+    console.print(f"  [dim]Provider: {provider}  (to switch, run: github-agent provider)[/dim]")
     if provider == "ollama":
         model_id = mod.pick_model(_ask)
     else:
