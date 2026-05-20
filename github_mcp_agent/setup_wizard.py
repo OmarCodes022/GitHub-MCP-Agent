@@ -50,6 +50,14 @@ GEMINI_MODELS = [
     ("gemini-1.5-flash", "gemini-1.5-flash", "fast"),
 ]
 
+COPILOT_MODELS = [
+    ("gpt-4o", "gpt-4o", "flagship"),
+    ("gpt-4o-mini", "gpt-4o-mini", "fast, cheap"),
+    ("claude-sonnet-4-5", "claude-sonnet-4-5", "Anthropic via Copilot"),
+    ("o3-mini", "o3-mini", "reasoning"),
+    ("gemini-1.5-pro", "gemini-1.5-pro", "Google via Copilot"),
+]
+
 OLLAMA_POPULAR_MODELS = [
     "llama3.2",
     "llama3.1",
@@ -258,6 +266,14 @@ def _setup_ollama() -> dict:
     return {"MODEL_ID": model, "OLLAMA_BASE_URL": base_url}
 
 
+def _setup_copilot() -> dict:
+    console.print("  [dim]Uses your GitHub token - no extra API key needed.[/dim]")
+    console.print("  [dim]Requires an active Copilot subscription (student pack, individual, or business).[/dim]")
+    model_choices = [f"{name}  ({desc})" for _, name, desc in COPILOT_MODELS]
+    model_display = _ask(questionary.select, "Model:", choices=model_choices)
+    return {"MODEL_ID": COPILOT_MODELS[model_choices.index(model_display)][0]}
+
+
 def _pull_docker_image():
     console.print("\n[bold]Pulling GitHub MCP Docker image...[/bold]")
     subprocess.run(["docker", "pull", "ghcr.io/github/github-mcp-server"], check=False)
@@ -297,10 +313,10 @@ def run():
     provider = _ask(
         questionary.select,
         "AI provider:",
-        choices=["AWS Bedrock", "Anthropic API", "OpenAI", "Google Gemini", "Local (Ollama)"],
+        choices=["AWS Bedrock", "Anthropic API", "OpenAI", "Google Gemini", "GitHub Copilot", "Local (Ollama)"],
     )
 
-    provider_key = {"AWS Bedrock": "bedrock", "Anthropic API": "anthropic", "OpenAI": "openai", "Google Gemini": "gemini", "Local (Ollama)": "ollama"}[provider]
+    provider_key = {"AWS Bedrock": "bedrock", "Anthropic API": "anthropic", "OpenAI": "openai", "Google Gemini": "gemini", "GitHub Copilot": "copilot", "Local (Ollama)": "ollama"}[provider]
 
     if not _check_prerequisites(provider=provider_key):
         console.print("\n[red]Fix the issues above before continuing.[/red]")
@@ -316,6 +332,8 @@ def run():
         provider_values = _setup_openai()
     elif provider == "Google Gemini":
         provider_values = _setup_gemini()
+    elif provider == "GitHub Copilot":
+        provider_values = _setup_copilot()
     else:
         provider_values = _setup_ollama()
 

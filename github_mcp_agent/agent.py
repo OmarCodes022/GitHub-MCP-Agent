@@ -39,6 +39,16 @@ def _build_model():
             raise RuntimeError("GEMINI_API_KEY is not set. Run 'github-agent setup' to configure.")
         return LiteLLMModel(model_id=f"gemini/{MODEL_ID}")
 
+    if PROVIDER == "copilot":
+        from strands.models.litellm import LiteLLMModel
+        token = os.environ.get("GITHUB_TOKEN")
+        if not token:
+            raise RuntimeError("GITHUB_TOKEN is not set. Run 'github-agent setup' to configure.")
+        return LiteLLMModel(
+            model_id=f"openai/{MODEL_ID}",
+            params={"api_base": "https://api.githubcopilot.com", "api_key": token},
+        )
+
     if PROVIDER == "ollama":
         from strands.models.litellm import LiteLLMModel
         base_url = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
