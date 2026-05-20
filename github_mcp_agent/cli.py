@@ -111,7 +111,7 @@ def _open_prompt():
     subprocess.run([editor, str(prompt_file)])
 
 
-@click.group(invoke_without_command=True)
+@click.group(invoke_without_command=True, context_settings={"help_option_names": ["-h", "--help"]})
 @click.option("--verbose", "-v", is_flag=True, default=False, help="Print tool calls as they happen")
 @click.pass_context
 def cli(ctx, verbose):
