@@ -1,5 +1,5 @@
 [project]
-name = "github-mcp-agent"
+name = "github-agent"
 version = "0.2.0"
 description = "Talk to your GitHub repos, issues, and project boards in plain English from your terminal"
 readme = "README.md"
