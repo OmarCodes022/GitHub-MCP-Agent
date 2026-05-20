@@ -266,6 +266,14 @@ def _setup_ollama() -> dict:
     return {"MODEL_ID": model, "OLLAMA_BASE_URL": base_url}
 
 
+def _setup_copilot() -> dict:
+    console.print("  [dim]Uses your GitHub token - no extra API key needed.[/dim]")
+    console.print("  [dim]Requires an active Copilot subscription (student pack, individual, or business).[/dim]")
+    model_choices = [f"{name}  ({desc})" for _, name, desc in COPILOT_MODELS]
+    model_display = _ask(questionary.select, "Model:", choices=model_choices)
+    return {"MODEL_ID": COPILOT_MODELS[model_choices.index(model_display)][0]}
+
+
 def _pull_docker_image():
     console.print("\n[bold]Pulling GitHub MCP Docker image...[/bold]")
     subprocess.run(["docker", "pull", "ghcr.io/github/github-mcp-server"], check=False)
