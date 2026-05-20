@@ -12,6 +12,7 @@ dependencies = [
     "questionary",
     "anthropic",
     "litellm",
+    "click",
 ]
 
 [project.scripts]
