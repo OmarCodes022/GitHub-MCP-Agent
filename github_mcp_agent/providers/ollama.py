@@ -37,6 +37,16 @@ def make_callback():
     return callback
 
 
+def pick_model(_ask) -> str:
+    result = subprocess.run(["ollama", "list"], capture_output=True, text=True)
+    installed = [line.split()[0] for line in result.stdout.splitlines()[1:] if line.split()]
+    choices = (installed if installed else POPULAR_MODELS) + ["other (type manually)"]
+    choice = _ask(questionary.select, "Model:", choices=choices)
+    if choice == "other (type manually)":
+        return _ask(questionary.text, "Model name:")
+    return choice
+
+
 def setup(_ask) -> dict:
     from rich.console import Console
     console = Console()
