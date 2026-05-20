@@ -14,9 +14,13 @@ You > which issues are assigned to maryam?
 ## Install
 
 ```bash
-git clone https://github.com/OmarCodes022/GitHub-MCP-Agent
-cd GitHub-MCP-Agent
-uv tool install .   # or: pip install .
+pip install github-mcp-agent
+```
+
+Or with uv:
+
+```bash
+uv tool install github-mcp-agent
 ```
 
 ---

@@ -1,5 +1,5 @@
 [project]
-name = "github-agent"
+name = "github-mcp-agent"
 version = "0.2.0"
 description = "Talk to your GitHub repos, issues, and project boards in plain English from your terminal"
 readme = "README.md"
@@ -19,12 +19,6 @@ classifiers = [
     "Topic :: Software Development",
     "Topic :: Utilities",
 ]
-
-[project.urls]
-Homepage = "https://github.com/OmarCodes022/GitHub-MCP-Agent"
-Repository = "https://github.com/OmarCodes022/GitHub-MCP-Agent"
-Issues = "https://github.com/OmarCodes022/GitHub-MCP-Agent/issues"
-
 dependencies = [
     "boto3",
     "strands-agents",
@@ -36,6 +30,11 @@ dependencies = [
     "litellm",
     "click",
 ]
+
+[project.urls]
+Homepage = "https://github.com/OmarCodes022/GitHub-MCP-Agent"
+Repository = "https://github.com/OmarCodes022/GitHub-MCP-Agent"
+Issues = "https://github.com/OmarCodes022/GitHub-MCP-Agent/issues"
 
 [project.scripts]
 github-agent = "github_mcp_agent.cli:main"
