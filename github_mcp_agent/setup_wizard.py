@@ -316,7 +316,7 @@ def run():
         choices=["AWS Bedrock", "Anthropic API", "OpenAI", "Google Gemini", "GitHub Copilot", "Local (Ollama)"],
     )
 
-    provider_key = {"AWS Bedrock": "bedrock", "Anthropic API": "anthropic", "OpenAI": "openai", "Google Gemini": "gemini", "Local (Ollama)": "ollama"}[provider]
+    provider_key = {"AWS Bedrock": "bedrock", "Anthropic API": "anthropic", "OpenAI": "openai", "Google Gemini": "gemini", "GitHub Copilot": "copilot", "Local (Ollama)": "ollama"}[provider]
 
     if not _check_prerequisites(provider=provider_key):
         console.print("\n[red]Fix the issues above before continuing.[/red]")
