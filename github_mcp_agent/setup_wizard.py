@@ -50,6 +50,14 @@ GEMINI_MODELS = [
     ("gemini-1.5-flash", "gemini-1.5-flash", "fast"),
 ]
 
+COPILOT_MODELS = [
+    ("gpt-4o", "gpt-4o", "flagship"),
+    ("gpt-4o-mini", "gpt-4o-mini", "fast, cheap"),
+    ("claude-sonnet-4-5", "claude-sonnet-4-5", "Anthropic via Copilot"),
+    ("o3-mini", "o3-mini", "reasoning"),
+    ("gemini-1.5-pro", "gemini-1.5-pro", "Google via Copilot"),
+]
+
 OLLAMA_POPULAR_MODELS = [
     "llama3.2",
     "llama3.1",
