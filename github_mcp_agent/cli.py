@@ -5,6 +5,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import click
 from rich.console import Console
 from rich.rule import Rule
 from rich.text import Text
@@ -79,27 +80,40 @@ def _open_prompt():
         from importlib.resources import files
         default = files("github_mcp_agent").joinpath("system_prompt.txt").read_text()
         prompt_file.write_text(default)
-        console.print(f"  [dim]Created {prompt_file} with default prompt — edit to customize.[/dim]\n")
+        console.print(f"  [dim]Created {prompt_file} with default prompt - edit to customize.[/dim]\n")
     editor = os.environ.get("EDITOR", "nano")
     subprocess.run([editor, str(prompt_file)])
 
 
-def main():
-    cmd = sys.argv[1] if len(sys.argv) > 1 else None
-
-    if cmd == "setup":
-        from github_mcp_agent.setup_wizard import run
-        run()
-    elif cmd == "config":
-        _open_config()
-    elif cmd == "prompt":
-        _open_prompt()
-    elif cmd is None:
+@click.group(invoke_without_command=True)
+@click.pass_context
+def cli(ctx):
+    """GitHub MCP Agent - talk to your repos in plain English."""
+    if ctx.invoked_subcommand is None:
         _run_agent()
-    else:
-        console.print(f"[red]Unknown command:[/red] {cmd}")
-        console.print("Usage: github-agent [setup | config | prompt]")
-        sys.exit(1)
+
+
+@cli.command()
+def setup():
+    """Run the interactive setup wizard."""
+    from github_mcp_agent.setup_wizard import run
+    run()
+
+
+@cli.command()
+def config():
+    """Open the config file in $EDITOR."""
+    _open_config()
+
+
+@cli.command()
+def prompt():
+    """Open the system prompt file in $EDITOR."""
+    _open_prompt()
+
+
+def main():
+    cli()
 
 
 if __name__ == "__main__":
