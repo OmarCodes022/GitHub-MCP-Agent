@@ -2,6 +2,8 @@
 
 Talk to your GitHub repos, issues, and project boards in plain English from your terminal.
 
+![GitHub MCP Agent demo](assets/demo1.png)
+
 ```
 You > list open issues in my raytracer repo
 You > set priority of issue #42 to urgent
