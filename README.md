@@ -39,7 +39,7 @@ Interactive wizard:
    - **Anthropic API** — API key from console.anthropic.com
    - **OpenAI** — API key from platform.openai.com
    - **Google Gemini** — API key from aistudio.google.com
-   - **GitHub Copilot** — uses your GitHub token, requires a Copilot subscription
+   - **GitHub Copilot** — browser OAuth flow, requires a Copilot subscription
    - **Local (Ollama)** — picks from your installed models, no API key needed
 3. Model selection (scrollable menu)
 4. Pulls the GitHub MCP Docker image
@@ -109,4 +109,4 @@ Uses the [Strands Agents SDK](https://github.com/strands-agents/sdk-python) with
 
 **Ollama model not found** — run `ollama list` to confirm the model name, re-run `github-agent model`
 
-**`No module named github_mcp_agent`** — reinstall with `uv tool install .` from the project directory
+**`No module named github_mcp_agent`** — reinstall with `pip install github-mcp-agent` or `uv tool install github-mcp-agent`
