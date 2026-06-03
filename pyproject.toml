@@ -1,6 +1,6 @@
 [project]
 name = "github-mcp-agent"
-version = "0.2.1"
+version = "0.2.2"
 description = "Talk to your GitHub repos, issues, and project boards in plain English from your terminal"
 readme = "README.md"
 license = { text = "MIT" }
