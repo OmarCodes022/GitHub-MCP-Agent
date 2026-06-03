@@ -81,18 +81,28 @@ def _get_copilot_token(oauth_token: str) -> str:
         )
 
 
+def _reauth(reason: str) -> str:
+    import os
+    from rich.console import Console
+    Console().print(f"\n  [yellow]{reason} - opening browser login...[/yellow]")
+    oauth_token = _device_flow()
+    from github_mcp_agent.setup_wizard import _write_config
+    _write_config({"COPILOT_OAUTH_TOKEN": oauth_token})
+    os.environ["COPILOT_OAUTH_TOKEN"] = oauth_token
+    return oauth_token
+
+
 def build_model(model_id: str):
     import os
     from strands.models.litellm import LiteLLMModel
     oauth_token = os.environ.get("COPILOT_OAUTH_TOKEN")
     if not oauth_token:
-        from rich.console import Console
-        Console().print("\n  [yellow]Copilot not authenticated - opening browser login...[/yellow]")
-        oauth_token = _device_flow()
-        from github_mcp_agent.setup_wizard import _write_config
-        _write_config({"COPILOT_OAUTH_TOKEN": oauth_token})
-        os.environ["COPILOT_OAUTH_TOKEN"] = oauth_token
-    token = _get_copilot_token(oauth_token)
+        oauth_token = _reauth("Copilot not authenticated")
+    try:
+        token = _get_copilot_token(oauth_token)
+    except RuntimeError:
+        oauth_token = _reauth("Copilot token invalid or revoked")
+        token = _get_copilot_token(oauth_token)
     return LiteLLMModel(
         model_id=f"openai/{model_id}",
         params={
